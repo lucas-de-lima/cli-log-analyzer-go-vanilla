@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"testing"
 	"time"
 )
@@ -43,5 +44,31 @@ func TestLogEntryEmpty(t *testing.T) {
 
 	if entry.Message != "" {
 		t.Errorf("Expected empty message, got '%s'", entry.Message)
+	}
+}
+
+func TestLogFileExists(t *testing.T) {
+	// Test that the sample log file exists and is readable
+	_, err := os.Stat("app.log")
+	if err != nil {
+		t.Errorf("Sample log file 'app.log' not found: %v", err)
+	}
+}
+
+func TestLogFileContent(t *testing.T) {
+	// Test that the log file has content
+	content, err := os.ReadFile("app.log")
+	if err != nil {
+		t.Errorf("Failed to read log file: %v", err)
+	}
+
+	if len(content) == 0 {
+		t.Error("Log file is empty")
+	}
+
+	// Check if file contains expected log format
+	contentStr := string(content)
+	if len(contentStr) < 50 {
+		t.Error("Log file seems too short")
 	}
 }

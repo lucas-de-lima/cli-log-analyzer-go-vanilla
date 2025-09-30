@@ -1,0 +1,10 @@
+[2025-01-15 10:00:00] [INFO] User logged in successfully
+[2025-01-15 10:05:23] [WARNING] High memory usage detected: 85%
+[2025-01-15 10:10:45] [ERROR] Database connection failed: timeout after 30s
+[2025-01-15 10:15:12] [INFO] Cache cleared successfully
+[2025-01-15 10:20:33] [DEBUG] Processing request ID: 12345
+[2025-01-15 10:25:56] [ERROR] File not found: /var/log/app.log
+[2025-01-15 10:30:11] [INFO] Backup completed successfully
+[2025-01-15 10:35:44] [WARNING] Disk space low: 15% remaining
+[2025-01-15 10:40:22] [DEBUG] User session expired
+[2025-01-15 10:45:17] [INFO] New user registered: john.doe@example.com
