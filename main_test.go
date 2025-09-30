@@ -7,7 +7,7 @@ import (
 )
 
 func TestLogEntryCreation(t *testing.T) {
-	// Test creating a LogEntry with valid data
+	// Testa a criação de uma LogEntry com dados válidos
 	timestamp := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
 	entry := LogEntry{
 		Timestamp: timestamp,
@@ -15,7 +15,7 @@ func TestLogEntryCreation(t *testing.T) {
 		Message:   "Test message",
 	}
 
-	// Verify the fields are set correctly
+	// Verifica se os campos foram definidos corretamente
 	if entry.Timestamp != timestamp {
 		t.Errorf("Expected timestamp %v, got %v", timestamp, entry.Timestamp)
 	}
@@ -30,10 +30,10 @@ func TestLogEntryCreation(t *testing.T) {
 }
 
 func TestLogEntryEmpty(t *testing.T) {
-	// Test creating an empty LogEntry
+	// Testa a criação de uma LogEntry vazia
 	entry := LogEntry{}
 
-	// Verify default values
+	// Verifica os valores padrão
 	if !entry.Timestamp.IsZero() {
 		t.Errorf("Expected zero timestamp, got %v", entry.Timestamp)
 	}
@@ -48,7 +48,7 @@ func TestLogEntryEmpty(t *testing.T) {
 }
 
 func TestLogFileExists(t *testing.T) {
-	// Test that the sample log file exists and is readable
+	// Testa se o arquivo de log de exemplo existe e é legível
 	_, err := os.Stat("app.log")
 	if err != nil {
 		t.Errorf("Sample log file 'app.log' not found: %v", err)
@@ -56,7 +56,7 @@ func TestLogFileExists(t *testing.T) {
 }
 
 func TestLogFileContent(t *testing.T) {
-	// Test that the log file has content
+	// Testa se o arquivo de log tem conteúdo
 	content, err := os.ReadFile("app.log")
 	if err != nil {
 		t.Errorf("Failed to read log file: %v", err)
@@ -66,7 +66,7 @@ func TestLogFileContent(t *testing.T) {
 		t.Error("Log file is empty")
 	}
 
-	// Check if file contains expected log format
+	// Verifica se o arquivo contém o formato de log esperado
 	contentStr := string(content)
 	if len(contentStr) < 50 {
 		t.Error("Log file seems too short")
@@ -74,7 +74,7 @@ func TestLogFileContent(t *testing.T) {
 }
 
 func TestLoadLogsFileNotFound(t *testing.T) {
-	// Test loading a non-existent file
+	// Testa o carregamento de um arquivo inexistente
 	entries, err := LoadLogs("nonexistent.log")
 
 	if err == nil {
@@ -87,7 +87,7 @@ func TestLoadLogsFileNotFound(t *testing.T) {
 }
 
 func TestLoadLogsEmptyFile(t *testing.T) {
-	// Create a temporary empty file
+	// Cria um arquivo temporário vazio
 	tmpFile, err := os.CreateTemp("", "test_empty.log")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
@@ -95,7 +95,7 @@ func TestLoadLogsEmptyFile(t *testing.T) {
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
 
-	// Test loading empty file
+	// Testa o carregamento de arquivo vazio
 	entries, err := LoadLogs(tmpFile.Name())
 
 	if err != nil {
@@ -108,7 +108,7 @@ func TestLoadLogsEmptyFile(t *testing.T) {
 }
 
 func TestLoadLogsValidFile(t *testing.T) {
-	// Create a temporary file with test data
+	// Cria um arquivo temporário com dados de teste
 	tmpFile, err := os.CreateTemp("", "test_valid.log")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
@@ -116,7 +116,7 @@ func TestLoadLogsValidFile(t *testing.T) {
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
 
-	// Write test data
+	// Escreve dados de teste
 	testData := `[2025-01-15 10:00:00] [INFO] Test message 1
 [2025-01-15 10:05:00] [ERROR] Test error message`
 
@@ -125,16 +125,51 @@ func TestLoadLogsValidFile(t *testing.T) {
 	}
 	tmpFile.Close()
 
-	// Test loading valid file
+	// Testa o carregamento de arquivo válido
 	entries, err := LoadLogs(tmpFile.Name())
 
 	if err != nil {
 		t.Errorf("Unexpected error loading valid file: %v", err)
 	}
 
-	// Note: This test will fail until we implement ParseLine method
-	// For now, we expect 0 entries because ParseLine will fail
+	// Nota: Este teste falhará até implementarmos o método ParseLine
+	// Por enquanto, esperamos 0 entradas porque ParseLine falhará
 	if len(entries) != 0 {
 		t.Errorf("Expected 0 entries (ParseLine not implemented), got %d", len(entries))
+	}
+}
+
+func TestParseLineNotImplemented(t *testing.T) {
+	// Testa o método ParseLine (implementação placeholder)
+	entry := LogEntry{}
+	err := entry.ParseLine("[2025-01-15 10:00:00] [INFO] Test message")
+
+	if err == nil {
+		t.Error("Expected error for ParseLine not implemented, got nil")
+	}
+
+	expectedError := "ParseLine not implemented yet"
+	if err.Error() != expectedError {
+		t.Errorf("Expected error '%s', got '%s'", expectedError, err.Error())
+	}
+}
+
+func TestParseLineWithEmptyString(t *testing.T) {
+	// Testa ParseLine com string vazia
+	entry := LogEntry{}
+	err := entry.ParseLine("")
+
+	if err == nil {
+		t.Error("Expected error for ParseLine with empty string, got nil")
+	}
+}
+
+func TestParseLineWithInvalidFormat(t *testing.T) {
+	// Testa ParseLine com formato inválido
+	entry := LogEntry{}
+	err := entry.ParseLine("This is not a valid log line")
+
+	if err == nil {
+		t.Error("Expected error for ParseLine with invalid format, got nil")
 	}
 }

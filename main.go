@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// LogEntry represents a single log entry with timestamp, level, and message
+// LogEntry representa uma entrada de log com timestamp, nível e mensagem
 type LogEntry struct {
 	Timestamp time.Time
 	Level     string
@@ -15,13 +15,14 @@ type LogEntry struct {
 }
 
 // ParseLine parses a log line and populates the LogEntry fields
+// Este método recebe uma linha bruta do log e extrai timestamp, level e message
 func (le *LogEntry) ParseLine(rawLine string) error {
-	// This is a placeholder implementation
-	// We'll implement the actual regex parsing in the next step
+	// Por enquanto, vamos implementar uma versão simples que sempre retorna erro
+	// Na próxima etapa implementaremos o regex para extrair os dados
 	return fmt.Errorf("ParseLine not implemented yet")
 }
 
-// LoadLogs reads a log file and returns a slice of LogEntry
+// LoadLogs lê um arquivo de log e retorna um slice de LogEntry
 func LoadLogs(filename string) ([]LogEntry, error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -35,13 +36,13 @@ func LoadLogs(filename string) ([]LogEntry, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "" {
-			continue // Skip empty lines
+			continue // Pula linhas vazias
 		}
 
 		var entry LogEntry
 		if err := entry.ParseLine(line); err != nil {
-			// For now, we'll skip malformed lines and continue
-			// In a production system, you might want to log these errors
+			// Por enquanto, vamos pular linhas mal formatadas e continuar
+			// Em um sistema de produção, você pode querer registrar esses erros
 			continue
 		}
 
