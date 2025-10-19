@@ -132,44 +132,135 @@ func TestLoadLogsValidFile(t *testing.T) {
 		t.Errorf("Unexpected error loading valid file: %v", err)
 	}
 
-	// Nota: Este teste falhará até implementarmos o método ParseLine
-	// Por enquanto, esperamos 0 entradas porque ParseLine falhará
-	if len(entries) != 0 {
-		t.Errorf("Expected 0 entries (ParseLine not implemented), got %d", len(entries))
+	// Agora que ParseLine está implementado, esperamos 2 entradas
+	if len(entries) != 2 {
+		t.Errorf("Expected 2 entries, got %d", len(entries))
+	}
+
+	// Verifica se a primeira entrada foi parseada corretamente
+	if entries[0].Level != "INFO" {
+		t.Errorf("Expected first entry level INFO, got %s", entries[0].Level)
+	}
+
+	if entries[1].Level != "ERROR" {
+		t.Errorf("Expected second entry level ERROR, got %s", entries[1].Level)
 	}
 }
 
-func TestParseLineNotImplemented(t *testing.T) {
-	// Testa o método ParseLine (implementação placeholder)
+func TestParseLineValidFormat(t *testing.T) {
+	// Testa ParseLine com formato válido
 	entry := LogEntry{}
-	err := entry.ParseLine("[2025-01-15 10:00:00] [INFO] Test message")
+	err := entry.ParseLine("[2025-01-15 10:30:45] [INFO] User logged in successfully")
 
-	if err == nil {
-		t.Error("Expected error for ParseLine not implemented, got nil")
+	if err != nil {
+		t.Errorf("Unexpected error for valid format: %v", err)
 	}
 
-	expectedError := "ParseLine not implemented yet"
-	if err.Error() != expectedError {
-		t.Errorf("Expected error '%s', got '%s'", expectedError, err.Error())
+	// Verifica se os campos foram preenchidos corretamente
+	expectedTime := time.Date(2025, 1, 15, 10, 30, 45, 0, time.UTC)
+	if !entry.Timestamp.Equal(expectedTime) {
+		t.Errorf("Expected timestamp %v, got %v", expectedTime, entry.Timestamp)
+	}
+
+	if entry.Level != "INFO" {
+		t.Errorf("Expected level INFO, got %s", entry.Level)
+	}
+
+	if entry.Message != "User logged in successfully" {
+		t.Errorf("Expected message 'User logged in successfully', got '%s'", entry.Message)
 	}
 }
 
-func TestParseLineWithEmptyString(t *testing.T) {
-	// Testa ParseLine com string vazia
-	entry := LogEntry{}
-	err := entry.ParseLine("")
+func TestParseLineDifferentLevels(t *testing.T) {
+	// Testa ParseLine com diferentes níveis de log
+	testCases := []struct {
+		line            string
+		expectedLevel   string
+		expectedMessage string
+	}{
+		{"[2025-01-15 10:00:00] [ERROR] Database connection failed", "ERROR", "Database connection failed"},
+		{"[2025-01-15 10:05:00] [WARNING] High memory usage detected", "WARNING", "High memory usage detected"},
+		{"[2025-01-15 10:10:00] [DEBUG] Processing request ID: 12345", "DEBUG", "Processing request ID: 12345"},
+	}
 
-	if err == nil {
-		t.Error("Expected error for ParseLine with empty string, got nil")
+	for _, tc := range testCases {
+		entry := LogEntry{}
+		err := entry.ParseLine(tc.line)
+
+		if err != nil {
+			t.Errorf("Unexpected error for line '%s': %v", tc.line, err)
+		}
+
+		if entry.Level != tc.expectedLevel {
+			t.Errorf("Expected level %s, got %s", tc.expectedLevel, entry.Level)
+		}
+
+		if entry.Message != tc.expectedMessage {
+			t.Errorf("Expected message '%s', got '%s'", tc.expectedMessage, entry.Message)
+		}
 	}
 }
 
-func TestParseLineWithInvalidFormat(t *testing.T) {
-	// Testa ParseLine com formato inválido
+func TestParseLineInvalidFormat(t *testing.T) {
+	// Testa ParseLine com formatos inválidos
+	invalidLines := []string{
+		"This is not a valid log line",
+		"[2025-01-15] [INFO] Missing time",
+		"[2025-01-15 10:00:00] INFO Missing brackets",
+		"[2025-01-15 10:00:00] [INFO]",
+		"",
+	}
+
+	for _, line := range invalidLines {
+		entry := LogEntry{}
+		err := entry.ParseLine(line)
+
+		if err == nil {
+			t.Errorf("Expected error for invalid line '%s', got nil", line)
+		}
+	}
+}
+
+func TestParseLineInvalidTimestamp(t *testing.T) {
+	// Testa ParseLine com timestamp inválido
 	entry := LogEntry{}
-	err := entry.ParseLine("This is not a valid log line")
+	err := entry.ParseLine("[2025-13-45 25:70:99] [INFO] Invalid timestamp")
 
 	if err == nil {
-		t.Error("Expected error for ParseLine with invalid format, got nil")
+		t.Error("Expected error for invalid timestamp, got nil")
+	}
+}
+
+func TestLoadRealLogFile(t *testing.T) {
+	// Testa o carregamento do arquivo real app.log
+	entries, err := LoadLogs("app.log")
+
+	if err != nil {
+		t.Errorf("Unexpected error loading real log file: %v", err)
+	}
+
+	// Verifica se carregou todas as 10 linhas do arquivo
+	if len(entries) != 10 {
+		t.Errorf("Expected 10 entries from app.log, got %d", len(entries))
+	}
+
+	// Verifica se os níveis foram parseados corretamente
+	levels := make(map[string]int)
+	for _, entry := range entries {
+		levels[entry.Level]++
+	}
+
+	// Verifica se temos os níveis esperados
+	expectedLevels := map[string]int{
+		"INFO":    4,
+		"WARNING": 2,
+		"ERROR":   2,
+		"DEBUG":   2,
+	}
+
+	for level, expectedCount := range expectedLevels {
+		if levels[level] != expectedCount {
+			t.Errorf("Expected %d %s entries, got %d", expectedCount, level, levels[level])
+		}
 	}
 }

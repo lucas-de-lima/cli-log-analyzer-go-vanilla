@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"regexp"
 	"time"
 )
 
@@ -17,9 +18,41 @@ type LogEntry struct {
 // ParseLine parses a log line and populates the LogEntry fields
 // Este método recebe uma linha bruta do log e extrai timestamp, level e message
 func (le *LogEntry) ParseLine(rawLine string) error {
-	// Por enquanto, vamos implementar uma versão simples que sempre retorna erro
-	// Na próxima etapa implementaremos o regex para extrair os dados
-	return fmt.Errorf("ParseLine not implemented yet")
+	// Define o padrão regex com grupos de captura nomeados
+	// Formato esperado: [YYYY-MM-DD HH:MM:SS] [LEVEL] Mensagem
+	pattern := `^\[(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[(?P<level>\w+)\] (?P<message>.*)$`
+
+	// Compila o regex para melhor performance
+	regex := regexp.MustCompile(pattern)
+
+	// Encontra correspondências na linha
+	matches := regex.FindStringSubmatch(rawLine)
+	if matches == nil {
+		return fmt.Errorf("linha não corresponde ao formato esperado: %s", rawLine)
+	}
+
+	// Extrai os grupos nomeados usando os índices
+	// matches[0] = linha completa
+	// matches[1] = timestamp
+	// matches[2] = level
+	// matches[3] = message
+	timestampStr := matches[1]
+	level := matches[2]
+	message := matches[3]
+
+	// Converte a string de timestamp para time.Time
+	// Usa o layout específico do nosso formato
+	timestamp, err := time.Parse("2006-01-02 15:04:05", timestampStr)
+	if err != nil {
+		return fmt.Errorf("erro ao converter timestamp '%s': %w", timestampStr, err)
+	}
+
+	// Preenche os campos da struct
+	le.Timestamp = timestamp
+	le.Level = level
+	le.Message = message
+
+	return nil
 }
 
 // LoadLogs lê um arquivo de log e retorna um slice de LogEntry
