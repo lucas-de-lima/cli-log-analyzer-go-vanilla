@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sort"
 	"time"
 )
 
@@ -111,6 +112,43 @@ func FilterByLevel(entries []LogEntry, level string) []LogEntry {
 	}
 
 	return filtered
+}
+
+// SortLogs ordena as entradas de log baseado no critério especificado
+// Retorna um novo slice ordenado sem modificar o original
+func SortLogs(entries []LogEntry, criteria string) []LogEntry {
+	// Cria uma cópia do slice para não modificar o original
+	sorted := make([]LogEntry, len(entries))
+	copy(sorted, entries)
+
+	// Usa sort.Slice com função de comparação baseada no critério
+	switch criteria {
+	case "timestamp":
+		// Ordena por timestamp (crescente)
+		sort.Slice(sorted, func(i, j int) bool {
+			return sorted[i].Timestamp.Before(sorted[j].Timestamp)
+		})
+	case "timestamp-desc":
+		// Ordena por timestamp (decrescente)
+		sort.Slice(sorted, func(i, j int) bool {
+			return sorted[i].Timestamp.After(sorted[j].Timestamp)
+		})
+	case "level":
+		// Ordena por nível (alfabético)
+		sort.Slice(sorted, func(i, j int) bool {
+			return sorted[i].Level < sorted[j].Level
+		})
+	case "level-desc":
+		// Ordena por nível (alfabético decrescente)
+		sort.Slice(sorted, func(i, j int) bool {
+			return sorted[i].Level > sorted[j].Level
+		})
+	default:
+		// Se o critério não é reconhecido, não ordena
+		// Pode retornar o slice original sem ordenação
+	}
+
+	return sorted
 }
 
 func main() {

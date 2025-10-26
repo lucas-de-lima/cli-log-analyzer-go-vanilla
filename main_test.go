@@ -436,3 +436,77 @@ func TestFilterByLevelCaseSensitive(t *testing.T) {
 		t.Errorf("Expected 1 info entry (case-sensitive), got %d", len(infoEntriesLower))
 	}
 }
+
+func TestSortLogsByTimestamp(t *testing.T) {
+	// Cria entradas de log com timestamps diferentes
+	entries := []LogEntry{
+		{
+			Timestamp: time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC),
+			Level:     "INFO",
+			Message:   "Third message",
+		},
+		{
+			Timestamp: time.Date(2025, 1, 15, 10, 0, 0, 0, time.UTC),
+			Level:     "ERROR",
+			Message:   "First message",
+		},
+		{
+			Timestamp: time.Date(2025, 1, 15, 10, 15, 0, 0, time.UTC),
+			Level:     "WARNING",
+			Message:   "Second message",
+		},
+	}
+
+	// Ordena por timestamp crescente
+	sorted := SortLogs(entries, "timestamp")
+
+	// Verifica se está ordenado corretamente
+	if !sorted[0].Timestamp.Equal(entries[1].Timestamp) {
+		t.Errorf("First entry should be earliest timestamp")
+	}
+
+	if !sorted[2].Timestamp.Equal(entries[0].Timestamp) {
+		t.Errorf("Last entry should be latest timestamp")
+	}
+
+	// Verifica se não modificou o original
+	if len(entries) != len(sorted) {
+		t.Errorf("Original slice should not be modified")
+	}
+}
+
+func TestSortLogsByLevel(t *testing.T) {
+	// Testa ordenação por nível
+	entries := []LogEntry{
+		{Timestamp: time.Date(2025, 1, 15, 10, 0, 0, 0, time.UTC), Level: "ERROR", Message: "Error"},
+		{Timestamp: time.Date(2025, 1, 15, 10, 5, 0, 0, time.UTC), Level: "DEBUG", Message: "Debug"},
+		{Timestamp: time.Date(2025, 1, 15, 10, 10, 0, 0, time.UTC), Level: "WARNING", Message: "Warning"},
+		{Timestamp: time.Date(2025, 1, 15, 10, 15, 0, 0, time.UTC), Level: "INFO", Message: "Info"},
+	}
+
+	sorted := SortLogs(entries, "level")
+
+	// Verifica ordem alfabética
+	if sorted[0].Level != "DEBUG" {
+		t.Errorf("Expected DEBUG as first level, got %s", sorted[0].Level)
+	}
+
+	if sorted[1].Level != "ERROR" {
+		t.Errorf("Expected ERROR as second level, got %s", sorted[1].Level)
+	}
+
+	if sorted[3].Level != "WARNING" {
+		t.Errorf("Expected WARNING as last level, got %s", sorted[3].Level)
+	}
+}
+
+func TestSortLogsEmptySlice(t *testing.T) {
+	// Testa ordenação de slice vazio
+	emptyEntries := []LogEntry{}
+
+	sorted := SortLogs(emptyEntries, "timestamp")
+
+	if len(sorted) != 0 {
+		t.Errorf("Expected empty slice, got %d entries", len(sorted))
+	}
+}
