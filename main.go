@@ -56,36 +56,45 @@ func (le *LogEntry) ParseLine(rawLine string) error {
 }
 
 // LoadLogs lê um arquivo de log e retorna um slice de LogEntry
+// Retorna erro se o arquivo não puder ser aberto ou lido
 func LoadLogs(filename string) ([]LogEntry, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open file %s: %w", filename, err)
+		return nil, fmt.Errorf("erro ao abrir arquivo %s: %w", filename, err)
 	}
 	defer file.Close()
 
 	var entries []LogEntry
 	scanner := bufio.NewScanner(file)
+	lineNumber := 0
 
 	for scanner.Scan() {
+		lineNumber++
 		line := scanner.Text()
+
+		// Pula linhas vazias
 		if line == "" {
-			continue // Pula linhas vazias
+			continue
 		}
 
+		// Tenta fazer o parse da linha
 		var entry LogEntry
 		if err := entry.ParseLine(line); err != nil {
-			// Por enquanto, vamos pular linhas mal formatadas e continuar
+			// Se o parse falhar, pula a linha mas continua
 			// Em um sistema de produção, você pode querer registrar esses erros
+			// Por enquanto, apenas ignoramos linhas mal formatadas
 			continue
 		}
 
 		entries = append(entries, entry)
 	}
 
+	// Verifica se houve erro ao ler o arquivo
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error reading file: %w", err)
+		return nil, fmt.Errorf("erro ao ler arquivo: %w", err)
 	}
 
+	// Retorna sucesso mesmo que algumas linhas tenham sido ignoradas
 	return entries, nil
 }
 

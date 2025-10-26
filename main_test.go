@@ -264,3 +264,76 @@ func TestLoadRealLogFile(t *testing.T) {
 		}
 	}
 }
+
+func TestLoadLogsWithMixedLines(t *testing.T) {
+	// Testa o carregamento de arquivo com linhas válidas e inválidas misturadas
+	tmpFile, err := os.CreateTemp("", "test_mixed.log")
+	if err != nil {
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
+
+	// Escreve dados mistos: válidos e inválidos
+	testData := `[2025-01-15 10:00:00] [INFO] Valid log line 1
+This is not a valid log line
+[2025-01-15 10:05:00] [ERROR] Valid error line
+Another invalid line
+[2025-01-15 10:10:00] [WARNING] Valid warning line`
+
+	if _, err := tmpFile.WriteString(testData); err != nil {
+		t.Fatalf("Failed to write test data: %v", err)
+	}
+	tmpFile.Close()
+
+	// Testa o carregamento do arquivo com linhas misturadas
+	entries, err := LoadLogs(tmpFile.Name())
+
+	if err != nil {
+		t.Errorf("Unexpected error loading file with mixed lines: %v", err)
+	}
+
+	// Deve ter carregado apenas as 3 linhas válidas
+	if len(entries) != 3 {
+		t.Errorf("Expected 3 valid entries, got %d", len(entries))
+	}
+
+	// Verifica se as linhas válidas foram carregadas corretamente
+	if entries[0].Level != "INFO" {
+		t.Errorf("Expected first entry level INFO, got %s", entries[0].Level)
+	}
+
+	if entries[1].Level != "ERROR" {
+		t.Errorf("Expected second entry level ERROR, got %s", entries[1].Level)
+	}
+
+	if entries[2].Level != "WARNING" {
+		t.Errorf("Expected third entry level WARNING, got %s", entries[2].Level)
+	}
+}
+
+func TestErrorPropagation(t *testing.T) {
+	// Testa se os erros são propagados corretamente
+	// Teste 1: Arquivo inexistente deve retornar erro
+	_, err := LoadLogs("file_that_does_not_exist.log")
+	if err == nil {
+		t.Error("Expected error for non-existent file, got nil")
+	}
+
+	// Verifica se a mensagem de erro contém informações úteis
+	if err.Error() == "" {
+		t.Error("Error message should not be empty")
+	}
+
+	// Teste 2: ParseLine com formato inválido deve retornar erro
+	entry := LogEntry{}
+	err = entry.ParseLine("Invalid line format")
+	if err == nil {
+		t.Error("Expected error for invalid line format, got nil")
+	}
+
+	// Verifica se a mensagem de erro contém informações úteis
+	if err.Error() == "" {
+		t.Error("Error message should not be empty")
+	}
+}
