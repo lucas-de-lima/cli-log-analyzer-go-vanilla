@@ -98,6 +98,21 @@ func LoadLogs(filename string) ([]LogEntry, error) {
 	return entries, nil
 }
 
+// FilterByLevel filtra entries por nível de log
+// Retorna um novo slice contendo apenas os logs do nível especificado
+func FilterByLevel(entries []LogEntry, level string) []LogEntry {
+	var filtered []LogEntry
+
+	// Itera sobre todas as entradas e adiciona apenas as que correspondem ao nível
+	for _, entry := range entries {
+		if entry.Level == level {
+			filtered = append(filtered, entry)
+		}
+	}
+
+	return filtered
+}
+
 func main() {
 	fmt.Println("CLI Log Analyzer - Go Vanilla")
 }

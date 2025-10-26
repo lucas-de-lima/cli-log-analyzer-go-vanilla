@@ -337,3 +337,102 @@ func TestErrorPropagation(t *testing.T) {
 		t.Error("Error message should not be empty")
 	}
 }
+
+func TestFilterByLevel(t *testing.T) {
+	// Cria um slice de teste com diferentes níveis
+	testEntries := []LogEntry{
+		{
+			Timestamp: time.Date(2025, 1, 15, 10, 0, 0, 0, time.UTC),
+			Level:     "INFO",
+			Message:   "User logged in",
+		},
+		{
+			Timestamp: time.Date(2025, 1, 15, 10, 5, 0, 0, time.UTC),
+			Level:     "ERROR",
+			Message:   "Database connection failed",
+		},
+		{
+			Timestamp: time.Date(2025, 1, 15, 10, 10, 0, 0, time.UTC),
+			Level:     "INFO",
+			Message:   "Cache cleared",
+		},
+		{
+			Timestamp: time.Date(2025, 1, 15, 10, 15, 0, 0, time.UTC),
+			Level:     "WARNING",
+			Message:   "High memory usage",
+		},
+		{
+			Timestamp: time.Date(2025, 1, 15, 10, 20, 0, 0, time.UTC),
+			Level:     "ERROR",
+			Message:   "File not found",
+		},
+	}
+
+	// Testa filtragem por INFO
+	infoEntries := FilterByLevel(testEntries, "INFO")
+	if len(infoEntries) != 2 {
+		t.Errorf("Expected 2 INFO entries, got %d", len(infoEntries))
+	}
+	for _, entry := range infoEntries {
+		if entry.Level != "INFO" {
+			t.Errorf("Expected INFO level, got %s", entry.Level)
+		}
+	}
+
+	// Testa filtragem por ERROR
+	errorEntries := FilterByLevel(testEntries, "ERROR")
+	if len(errorEntries) != 2 {
+		t.Errorf("Expected 2 ERROR entries, got %d", len(errorEntries))
+	}
+	for _, entry := range errorEntries {
+		if entry.Level != "ERROR" {
+			t.Errorf("Expected ERROR level, got %s", entry.Level)
+		}
+	}
+
+	// Testa filtragem por WARNING
+	warningEntries := FilterByLevel(testEntries, "WARNING")
+	if len(warningEntries) != 1 {
+		t.Errorf("Expected 1 WARNING entry, got %d", len(warningEntries))
+	}
+
+	// Testa filtragem por nível inexistente
+	debugEntries := FilterByLevel(testEntries, "DEBUG")
+	if len(debugEntries) != 0 {
+		t.Errorf("Expected 0 DEBUG entries, got %d", len(debugEntries))
+	}
+
+	// Testa filtragem de slice vazio
+	emptyEntries := FilterByLevel([]LogEntry{}, "INFO")
+	if len(emptyEntries) != 0 {
+		t.Errorf("Expected 0 entries from empty slice, got %d", len(emptyEntries))
+	}
+}
+
+func TestFilterByLevelCaseSensitive(t *testing.T) {
+	// Testa se a filtragem é case-sensitive
+	testEntries := []LogEntry{
+		{
+			Timestamp: time.Date(2025, 1, 15, 10, 0, 0, 0, time.UTC),
+			Level:     "INFO",
+			Message:   "Test message",
+		},
+		{
+			Timestamp: time.Date(2025, 1, 15, 10, 5, 0, 0, time.UTC),
+			Level:     "info", // lowercase
+			Message:   "Test message 2",
+		},
+	}
+
+	// Filtra por "INFO" (uppercase)
+	infoEntries := FilterByLevel(testEntries, "INFO")
+	if len(infoEntries) != 1 {
+		t.Errorf("Expected 1 INFO entry (case-sensitive), got %d", len(infoEntries))
+	}
+
+	// Filtra por "info" (lowercase)
+	infoEntriesLower := FilterByLevel(testEntries, "info")
+	if len(infoEntriesLower) != 1 {
+		t.Errorf("Expected 1 info entry (case-sensitive), got %d", len(infoEntriesLower))
+	}
+}
